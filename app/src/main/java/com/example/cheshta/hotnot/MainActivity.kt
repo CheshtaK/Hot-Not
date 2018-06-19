@@ -3,17 +3,23 @@ package com.example.cheshta.hotnot
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
+import android.os.Handler
 import android.provider.MediaStore
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
+import com.example.cheshta.hotnot.classifier.Classifier
 import java.io.File
 
 class MainActivity : AppCompatActivity() {
 
+    private lateinit var classifier: Classifier
+
+    private val handler = Handler()
     private var photoFilePath = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,7 +31,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun checkPermissions(){
         if(permissionGranted())
-            takePhoto()
+            init()
         else
             requestPermission()
     }
@@ -66,6 +72,26 @@ class MainActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         val file = File(photoFilePath)
         if(requestCode == 2 && file.exists())
-            //classify
+            classifyPhoto()
+    }
+
+    private fun init(){
+        createClassifier()
+        takePhoto()
+    }
+
+    private fun createClassifier(){
+        classifier = ImageClassifierFactory.create(
+                assets,
+                GRAPH_FILE_PATH,
+                LABELS_FILE_PATH,
+                IMAGE_SIZE,
+                GRAPH_INPUT_NAME,
+                GRAPH_OUTPUT_NAME
+        )
+    }
+
+    private fun classifyPhoto(file: File){
+        val photoBitmap = BitmapFactory.decodeFile(file.absolutePath)
     }
 }
