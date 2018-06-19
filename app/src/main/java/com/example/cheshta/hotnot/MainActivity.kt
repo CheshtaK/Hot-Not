@@ -13,6 +13,8 @@ import android.provider.MediaStore
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import com.example.cheshta.hotnot.classifier.Classifier
+import com.example.cheshta.hotnot.classifier.*
+import com.example.cheshta.hotnot.classifier.tensorflow.ImageClassifierFactory
 import java.io.File
 
 class MainActivity : AppCompatActivity() {
