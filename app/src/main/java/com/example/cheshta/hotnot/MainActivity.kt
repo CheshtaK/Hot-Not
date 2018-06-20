@@ -3,6 +3,7 @@ package com.example.cheshta.hotnot
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.support.v7.app.AppCompatActivity
@@ -15,18 +16,25 @@ import android.support.v4.content.ContextCompat
 import com.example.cheshta.hotnot.classifier.Classifier
 import com.example.cheshta.hotnot.classifier.*
 import com.example.cheshta.hotnot.classifier.tensorflow.ImageClassifierFactory
+import com.example.cheshta.hotnot.utils.getCroppedBitmap
+import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
+import android.os.StrictMode
+
+
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var classifier: Classifier
-
     private val handler = Handler()
     private var photoFilePath = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        val builder = StrictMode.VmPolicy.Builder()
+        StrictMode.setVmPolicy(builder.build())
 
         checkPermissions()
     }
@@ -74,7 +82,7 @@ class MainActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         val file = File(photoFilePath)
         if(requestCode == 2 && file.exists())
-            classifyPhoto()
+            classifyPhoto(file)
     }
 
     private fun init(){
@@ -95,5 +103,35 @@ class MainActivity : AppCompatActivity() {
 
     private fun classifyPhoto(file: File){
         val photoBitmap = BitmapFactory.decodeFile(file.absolutePath)
+        val croppedBitmap = getCroppedBitmap(photoBitmap)
+        classifyAndShowResult(croppedBitmap)
+        ivPhoto.setImageBitmap(photoBitmap)
+    }
+
+    private fun classifyAndShowResult(croppedBitmap: Bitmap) {
+        runInBackground(
+                Runnable {
+                    val result = classifier.recognizeImage(croppedBitmap)
+                    showResult(result)
+                })
+    }
+
+    @Synchronized
+    private fun runInBackground(runnable: Runnable) {
+        handler.post(runnable)
+    }
+
+    private fun showResult(result: Result) {
+        tvResult.text = result.result.toUpperCase()
+        layout.setBackgroundColor(getColorFromResult(result.result))
+    }
+
+    @Suppress("DEPRECATION")
+    private fun getColorFromResult(result: String): Int {
+        return if (result == getString(R.string.hot)) {
+            resources.getColor(R.color.hot)
+        } else {
+            resources.getColor(R.color.not)
+        }
     }
 }
